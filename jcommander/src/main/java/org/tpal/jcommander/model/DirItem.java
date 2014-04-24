@@ -11,4 +11,10 @@ public class DirItem
         super( file );
     }
 
+    @Override
+    public Long getSize()
+    {
+        return -1L;
+    }
+
 }

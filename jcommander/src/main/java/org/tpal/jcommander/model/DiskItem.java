@@ -17,4 +17,10 @@ public interface DiskItem
 
     public boolean isDirectory();
 
+    public void moveTo( String destinationPath );
+
+    public void copyTo( String destinationPath );
+
+    public void remove();
+
 }

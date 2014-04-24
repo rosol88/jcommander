@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.Date;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.tpal.jcommander.service.DiskService;
 
 public abstract class AbstractDiskItem
     implements DiskItem
@@ -65,7 +67,15 @@ public abstract class AbstractDiskItem
     {
         this.date = new Date( file.lastModified() );
         this.name = FilenameUtils.getBaseName( file.getName() );
-        this.extension = FilenameUtils.getExtension( file.getName() );
+        if ( StringUtils.isBlank( this.name ) )
+        {
+            this.name = file.getName();
+            this.extension = "";
+        }
+        else
+        {
+            this.extension = FilenameUtils.getExtension( file.getName() );
+        }
         this.size = file.length();
         this.setPath( file.getAbsolutePath() );
         setDirectory( file.isDirectory() );
@@ -95,6 +105,27 @@ public abstract class AbstractDiskItem
     public void setDirectory( boolean directory )
     {
         this.directory = directory;
+    }
+
+    @Override
+    public void moveTo( String destinationPath )
+    {
+        DiskService.getInstance().move( this, destinationPath );
+
+    }
+
+    @Override
+    public void copyTo( String destinationPath )
+    {
+        DiskService.getInstance().copy( this, destinationPath );
+
+    }
+
+    @Override
+    public void remove()
+    {
+        DiskService.getInstance().remove( this );
+
     }
 
 }

@@ -3,10 +3,12 @@ package org.tpal.jcommander.view;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.List;
 
 import javax.swing.JComboBox;
 
+import org.tpal.jcommander.exception.FileNotSupportedException;
 import org.tpal.jcommander.model.Drive;
 import org.tpal.jcommander.service.DiskService;
 
@@ -35,7 +37,14 @@ public class DiskCombo
     private void select()
     {
         Drive drive = (Drive) getSelectedItem();
-        table.setPath( drive.getPath() );
+        try
+        {
+            table.setPath( drive.getPath() );
+        }
+        catch ( FileNotSupportedException e )
+        {
+            MessageHelper.showNotSupportedFile( e.getFile() );
+        }
     }
 
     @SuppressWarnings( "unchecked" )

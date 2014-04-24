@@ -6,17 +6,36 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
+import org.tpal.jcommander.exception.FileNotSupportedException;
+import org.tpal.jcommander.locale.Context;
+import org.tpal.jcommander.locale.ContextChangeListener;
+import org.tpal.jcommander.service.ContextHolder;
 import org.tpal.jcommander.service.DiskService;
 
 public class DiskItemTableModel
     extends AbstractTableModel
+    implements ContextChangeListener
 {
     List<DiskItem> items = new ArrayList<DiskItem>();
 
-    String[] columns = { "Nazwa", "Roz.", "Wielkość", "Czas" };
+    private String[] columns;
+
+    private Context context;
 
     public DiskItemTableModel()
     {
+        context = ContextHolder.getContext();
+        context.addContextChangeListener( this );
+        initCols();
+    }
+
+    private void initCols()
+    {
+        columns =
+            new String[] { context.getBundle().getString( "Nazwa" ),
+                          context.getBundle().getString( "Rozszerzenie" ),
+                          context.getBundle().getString( "Wielkosc" ),
+                          context.getBundle().getString( "Czas" ) };
     }
 
     @Override
@@ -57,6 +76,10 @@ public class DiskItemTableModel
         }
         else if ( columnIndex == 2 )
         {
+            if ( di.getSize().equals( -1L ) )
+            {
+                return "<DIR>";
+            }
             return di.getSize();
         }
         else if ( columnIndex == 3 )
@@ -67,6 +90,7 @@ public class DiskItemTableModel
     }
 
     public void setPath( String path )
+        throws FileNotSupportedException
     {
         DiskService ds = DiskService.getInstance();
         this.items = ds.getDiskItems( path );
@@ -75,6 +99,7 @@ public class DiskItemTableModel
             items.add( 0, new BackItem( new File( path ) ) );
         }
         fireTableDataChanged();
+
     }
 
     public DiskItem getItemAt( int row )
@@ -82,4 +107,10 @@ public class DiskItemTableModel
         return items.get( row );
     }
 
+    @Override
+    public void contextChanged()
+    {
+        initCols();
+        this.fireTableStructureChanged();
+    }
 }

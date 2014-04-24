@@ -5,20 +5,32 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
+import javax.swing.JSplitPane;
+
+import org.tpal.jcommander.ComponentController;
+import org.tpal.jcommander.exception.FileNotSupportedException;
+import org.tpal.jcommander.locale.Context;
+import org.tpal.jcommander.locale.ContextChangeListener;
+import org.tpal.jcommander.service.ContextHolder;
 
 public class FormBuilder
 {
 
     List<DiskCombo> combos = new ArrayList<DiskCombo>();
+
+    private ComponentController controller = new ComponentController();
+
+    private Context context;
 
     public JCommanderFrame buildFrame()
     {
@@ -30,6 +42,11 @@ public class FormBuilder
 
     public void buildGui()
     {
+        Locale locale = new Locale( "PL" );
+
+        context = new Context( "MyResources" );
+        context.setLocale( locale );
+        ContextHolder.setContext( context );
         JCommanderFrame frame = buildFrame();
         MenuBar menu = buildMenuBar();
         frame.setJMenuBar( menu );
@@ -72,7 +89,7 @@ public class FormBuilder
         cons2.gridx = 0;
         cons2.gridy = 0;
 
-        panel.add( new JLabel( "C;/asdsa/cascssadasdsadsadsad", JLabel.RIGHT ), cons2 );
+        panel.add( new JLabel( "C:/text/text", JLabel.RIGHT ), cons2 );
         panel.add( new DiskCombo( null ), cons );
         return panel;
     }
@@ -86,14 +103,68 @@ public class FormBuilder
         cons.weightx = 0.5;
         cons.gridx = GridBagConstraints.RELATIVE;
 
-        panel.add( new JButton( "F3 Podgląd" ), cons );
-        panel.add( new JButton( "F3 Podgląd" ), cons );
-        panel.add( new JButton( "F3 Podgląd" ), cons );
-        panel.add( new JButton( "F3 Podgląd" ), cons );
-        panel.add( new JButton( "F3 Podgląd" ), cons );
-        panel.add( new JButton( "F3 Podgląd" ), cons );
-        panel.add( new JButton( "F3 Podgląd" ), cons );
+        panel.add( buildBtn( "f3" ), cons );
+        panel.add( buildBtn( "f4" ), cons );
+        JButton copyBtn = buildBtn( "f5" );
+        copyBtn.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent e )
+            {
+                try
+                {
+                    controller.copyButton( e );
+                }
+                catch ( FileNotSupportedException ex )
+                {
+                    MessageHelper.showNotSupportedFile( ex.getFile() );
+                }
+            }
+        } );
+        panel.add( copyBtn, cons );
+        JButton moveBtn = buildBtn( "f6" );
+        moveBtn.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent e )
+            {
+                try
+                {
+                    controller.moveButton( e );
+                }
+                catch ( FileNotSupportedException ex )
+                {
+                    MessageHelper.showNotSupportedFile( ex.getFile() );
+                }
+            }
+        } );
+        panel.add( moveBtn, cons );
+        panel.add( buildBtn( "f7" ), cons );
+        JButton removeBtn = buildBtn( "f8" );
+        removeBtn.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent e )
+            {
+                try
+                {
+                    controller.removeButton( e );
+                }
+                catch ( FileNotSupportedException ex )
+                {
+                    MessageHelper.showNotSupportedFile( ex.getFile() );
+                }
+            }
+        } );
+        panel.add( removeBtn, cons );
         return panel;
+    }
+
+    private JButton buildBtn( String key )
+    {
+        JButton btn = new JButton( context.getBundle().getString( key ) );
+        context.addContextChangeListener( new ButtonContextListener( btn, key ) );
+        return btn;
     }
 
     private JPanel buildLayout()
@@ -102,40 +173,25 @@ public class FormBuilder
         return panel;
     }
 
-    private JPanel buildTabsPanel()
+    private JSplitPane buildTabsPanel()
     {
-        JPanel panel = new JPanel();
-        panel.setLayout( new BoxLayout( panel, BoxLayout.X_AXIS ) );
-        panel.add( buildTabPanel() );
-        panel.add( buildTabPanel() );
+
+        DiskTabPanel leftTabPanel = buildTabPanel( true );
+        DiskTabPanel rightTabPanel = buildTabPanel( false );
+        controller.setActiveTabPanel( leftTabPanel );
+        controller.setInactiveTabPanel( rightTabPanel );
+        JSplitPane panel = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, leftTabPanel, rightTabPanel );
+        panel.setOneTouchExpandable( true );
+        panel.setDividerLocation( 0.5 );
+        panel.setResizeWeight( 0.5 );
         return panel;
     }
 
-    private JPanel buildTabPanel()
+    private DiskTabPanel buildTabPanel( boolean active )
     {
-        JPanel panel = new JPanel();
 
-        panel.setLayout( new BorderLayout() );
-        DiskItemTable dit = new DiskItemTable();
-
-        panel.add( buildDiskPanel( dit ), BorderLayout.NORTH );
-
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab( "c:", new JScrollPane( dit ) );
-        panel.add( tabbedPane, BorderLayout.CENTER );
-        return panel;
-    }
-
-    private Component buildDiskPanel( DiskItemTable dit )
-    {
-        final JPanel panel = new JPanel();
-        panel.setLayout( new BorderLayout() );
-        DiskCombo dc = new DiskCombo( dit );
-        combos.add( dc );
-        panel.add( dc, BorderLayout.WEST );
-        panel.add( new JLabel( "SADAS" ), BorderLayout.CENTER );
-        panel.add( new JLabel( "SADAS" ), BorderLayout.EAST );
-        return panel;
+        DiskTabPanel dtp = new DiskTabPanel( active );
+        return dtp;
     }
 
     private JPanel buildFlowPanel()
